@@ -63,15 +63,55 @@ function App() {
 		e.target.select();
 	};
 
-	function handleConvert() {
+	async function hashing(hashMethod: string, input: string) {
+		/*
+		// Step 1: Wrap the stream. Seems innocent enough.
+		const response = new Response(stream);
+
+		// Step 2: Convert to Blob. This starts buffering... ALL OF IT.
+		// If stream is 10GB, the browser now tries to allocate 10GB for the Blob.
+		const blob = await response.blob(); // Good luck!
+
+		// Step 3: Extract the ArrayBuffer. Another massive memory allocation.
+		// The browser now holds the data TWICE (Blob + ArrayBuffer) momentarily.
+		const buffer = await blob.arrayBuffer(); // Hope you have 32GB of RAM!
+
+		// Step 4: FINALLY, call digest. If the browser hasn't crashed yet.
+		const hash = await crypto.subtle.digest('SHA-256', buffer);
+		 */
+
+		// Encode the input string as a Uint8Array
+		const encoder = new TextEncoder();
+		const data = encoder.encode(input);
+		// Use the SubtleCrypto interface to hash the data using SHA-224
+		const hashBuffer = await crypto.subtle.digest(hashMethod, data);
+		// Convert the hash buffer to a hexadecimal string
+		const hashArray = Array.from(new Uint8Array(hashBuffer));
+		const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+		return hashHex; // Return the SHA-224 hash as a hexadecimal string
+	}
+
+	function base64ToString(base64: string) {
+		const binString = atob(base64);
+		const bytes = Uint8Array.from(binString/*, (m) => m.codePointAt(0)*/);
+		return new TextDecoder().decode(bytes);
+	}
+
+	function stringToBase64(str: string) {
+		const bytes = new TextEncoder().encode(str);
+		const binString = Array.from(bytes, (byte) => String.fromCodePoint(byte)).join("");
+		return btoa(binString);
+	}
+
+	async function handleConvert() {
 		let value = '';
 		try {
 			value = inputRef.current!.value;
 			console.log("value", value);
 			if (selectedOption === "base64-encode") {
-				value = btoa(value);
+				value = stringToBase64(value); // btoa(value);
 			} else if (selectedOption === "base64-decode") {
-				value = atob(value);
+				value = atob(value); // base64ToString(value); // atob(value);
 			} else if (selectedOption === "base16-encode") {
 				value = stringToHex(value);
 			} else if (selectedOption === "base16-decode") {
@@ -108,17 +148,17 @@ function App() {
 			} else if (selectedOption === "MD5") {
 				value = CryptoJS.MD5(value).toString();
 			} else if (selectedOption === "SHA-1") {
-				value = CryptoJS.SHA1(value).toString();
+				value = await hashing('sha-1', value);
 			} else if (selectedOption === "SHA-3") {
 				value = CryptoJS.SHA3(value).toString();
 			} else if (selectedOption === "SHA-224") {
 				value = CryptoJS.SHA224(value).toString();
 			} else if (selectedOption === "SHA-256") {
-				value = CryptoJS.SHA256(value).toString();
+				value = await hashing('sha-256', value);
 			} else if (selectedOption === "SHA-384") {
-				value = CryptoJS.SHA384(value).toString();
+				value = await hashing('sha-384', value);
 			} else if (selectedOption === "SHA-512") {
-				value = CryptoJS.SHA512(value).toString();
+				value = await hashing('sha-512', value);
 			}
 			console.log("value", value);
 		} catch (e) {
