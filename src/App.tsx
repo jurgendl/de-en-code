@@ -91,11 +91,13 @@ function App() {
 		return hashHex; // Return the SHA-224 hash as a hexadecimal string
 	}
 
-	function base64ToString(base64: string) {
+	/*function base64ToString(base64: string) {
 		const binString = atob(base64);
-		const bytes = Uint8Array.from(binString/*, (m) => m.codePointAt(0)*/);
+		const bytes = Uint8Array.from(binString
+			//, (m) => m.codePointAt(0)
+			);
 		return new TextDecoder().decode(bytes);
-	}
+	}*/
 
 	function stringToBase64(str: string) {
 		const bytes = new TextEncoder().encode(str);
